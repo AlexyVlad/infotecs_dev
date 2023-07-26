@@ -8,7 +8,6 @@ def load_data():
     with open("RU.txt", "r", encoding="utf-8") as file:
         for line in file:
             fields = line.strip().split("\t")
-            print(line)
             data[int(fields[0])] = {
                 "name": fields[1],
                 "asciiname": fields[2],
@@ -29,8 +28,18 @@ def load_data():
                 "timezone": fields[17],
                 "modification_date": fields[18],
             }
-
     return data
+
+
+def load_time_zone():
+    time_zone = {}
+    with open("timeZones.txt", "r", encoding="utf-8") as file:
+        for line in file:
+            fields = line.strip().split("\t")
+            time_zone[fields[1]] = {
+                "GMT": float(fields[3]),
+            }
+    return time_zone
 
 
 # Метод принимает идентификатор geonameid и возвращает информацию о городе.
@@ -46,18 +55,19 @@ def get_cities_by_page(page, items_per_page):
     return cities
 
 
+# Возвращает подсказку с возможными вариантами продолжений по введенной части названия города
 def city_analyzer(part_name):
     result = []
     for geonameid, info in data.items():
         alternatenames = info['alternatenames'].lower().split(',')
         if part_name.lower() in info['name'].lower():
-            result.append(info['name'])
+            result.append(info['name'].lower().replace(part_name.lower(), ''))
             continue
         for alt_name in alternatenames:
             if part_name.lower() in alt_name.strip():
-                result.append(alt_name)
+                result.append(alt_name.lower().replace(part_name.lower(), ''))
                 break
-    return result
+    return set(result)
 
 
 def get_city_by_name(name):
@@ -80,6 +90,7 @@ def get_city_by_name(name):
         return None
 
 
+# Сравнение 2 городов, вывод инфы о них, различие time зоны (на сколько), какой севернее
 def compare_cities(city1, city2):
     city_info1 = get_city_by_name(city1)
     city_info2 = get_city_by_name(city2)
@@ -89,12 +100,19 @@ def compare_cities(city1, city2):
 
     northern_city = city_info1 if city_info1["latitude"] > city_info2["latitude"] else city_info2
     same_timezone = city_info1["timezone"] == city_info2["timezone"]
+    same_timezone_difference = 0
 
+    if not same_timezone:
+        time_zone = load_time_zone()
+
+        same_timezone_difference = abs(time_zone[city_info1["timezone"]]["GMT"]) - \
+                                   abs(time_zone[city_info2["timezone"]]["GMT"])
     return {
         "city1": city_info1,
         "city2": city_info2,
         "northern_city": northern_city["name"],
-        "same_timezone": same_timezone
+        "same_timezone": same_timezone,
+        "same_timezone_difference": abs(same_timezone_difference),
     }
 
 
