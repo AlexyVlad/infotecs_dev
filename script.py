@@ -193,7 +193,6 @@ class GeoServer(http.server.SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     data = load_data()
-
     server_address = ('', 8000)
     httpd = http.server.HTTPServer(server_address, GeoServer)
     print('Сервер запущен...')
