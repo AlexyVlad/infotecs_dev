@@ -70,6 +70,7 @@ def city_analyzer(part_name):
     return set(result)
 
 
+# Возвращает город по имени (обрабатывает если город не 1)
 def get_city_by_name(name):
     result = []
     for geonameid, info in data.items():
